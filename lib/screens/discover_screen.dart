@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../services/jikan_service.dart';
+import '../src/services/jikan_service.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -90,7 +90,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
             // Search field
             TextField(
-              decoration: const InputDecoration(labelText: 'Search manga...', prefixIcon: Icon(Icons.search), border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Search manga...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
               onChanged: _onSearchChanged,
             ),
 
@@ -105,7 +109,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(label: const Text('All'), selected: selectedGenreId == null, onSelected: (_) => _onGenreChanged(null)),
+                    child: FilterChip(
+                      label: const Text('All'),
+                      selected: selectedGenreId == null,
+                      onSelected: (_) => _onGenreChanged(null),
+                    ),
                   ),
                   ...(genres.isNotEmpty ? genres : _kSampleGenres).map((g) {
                     final id = g['mal_id'] as int;
@@ -115,7 +123,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       child: FilterChip(
                         label: Text(name),
                         selected: selectedGenreId == id,
-                        onSelected: (_) => _onGenreChanged(selectedGenreId == id ? null : id),
+                        onSelected: (_) =>
+                            _onGenreChanged(selectedGenreId == id ? null : id),
                       ),
                     );
                   }),
@@ -143,7 +152,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       ),
                       child: const Text(
                         'Tap to test image viewer →',
-                        style: TextStyle(color: Colors.indigo, decoration: TextDecoration.underline),
+                        style: TextStyle(
+                          color: Colors.indigo,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ],
