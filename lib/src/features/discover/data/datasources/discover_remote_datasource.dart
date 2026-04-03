@@ -1,59 +1,49 @@
-import 'dart:convert';
+// data/datasources/discover_remote_datasource.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-import 'package:mangatrack/src/core/constants/app_constants.dart';
-import '../models/manga_response.model.dart';
+import 'package:mangatrack/src/features/discover/data/models/genre.model.dart';
+import 'package:mangatrack/src/features/discover/data/models/manga_response.model.dart';
+import 'package:mangatrack/src/services/jikan_service.dart';
 
 abstract class DiscoverRemoteDatasource {
   Future<MangaResponseModel> fetchManga({
     int page = 1,
     String? query,
-    String? status,
-    String? orderBy,
-    String? sort,
+    List<int>? genreIds, // ← List<int>
+    int limit = 25,
   });
+
+  Future<List<GenreModel>> fetchGenres();
 }
 
 class DiscoverRemoteDatasourceImpl implements DiscoverRemoteDatasource {
-  final http.Client _client;
-
-  DiscoverRemoteDatasourceImpl(this._client);
-
   @override
   Future<MangaResponseModel> fetchManga({
     int page = 1,
     String? query,
-    String? status,
-    String? orderBy,
-    String? sort,
+    List<int>? genreIds, // ← List<int>
+    int limit = 25,
   }) async {
-    final queryParams = {
-      'page': page.toString(),
-      if (query != null) 'q': query,
-      if (status != null) 'status': status,
-      if (orderBy != null) 'order_by': orderBy,
-      if (sort != null) 'sort': sort,
-    };
+    final json = await JikanService.fetchManga(
+      page: page,
+      query: query,
+      genreIds: genreIds, // ← pass list
+      limit: limit,
+    );
+    return MangaResponseModel.fromJson(json);
+  }
 
-    final uri = Uri.parse(
-      '${AppConstants.baseUrl}/manga',
-    ).replace(queryParameters: queryParams);
-
-    final response = await _client.get(uri);
-
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return MangaResponseModel.fromJson(json);
-    } else {
-      throw Exception('Failed to fetch manga: ${response.statusCode}');
-    }
+  @override
+  Future<List<GenreModel>> fetchGenres() async {
+    final json = await JikanService.fetchGenres();
+    final data = json['data'] as List<dynamic>;
+    return data
+        .map((e) => GenreModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }
-
-final httpClientProvider = Provider<http.Client>((ref) => http.Client());
 
 final discoverRemoteDatasourceProvider = Provider<DiscoverRemoteDatasource>((
   ref,
 ) {
-  return DiscoverRemoteDatasourceImpl(ref.read(httpClientProvider));
+  return DiscoverRemoteDatasourceImpl();
 });

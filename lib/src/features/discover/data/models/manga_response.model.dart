@@ -2,18 +2,20 @@ import 'manga.model.dart';
 
 class MangaResponseModel {
   final List<MangaModel> data;
-  final PaginationModel pagination;
+  final PaginationModel? pagination;
 
-  const MangaResponseModel({required this.data, required this.pagination});
+  const MangaResponseModel({required this.data, this.pagination});
 
   factory MangaResponseModel.fromJson(Map<String, dynamic> json) {
     return MangaResponseModel(
-      data: (json['data'] as List<dynamic>)
-          .map((e) => MangaModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      pagination: PaginationModel.fromJson(
-        json['pagination'] as Map<String, dynamic>,
-      ),
+      data:
+          (json['data'] as List?) // ← List? instead of List<dynamic>
+              ?.map((e) => MangaModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [], // ← fallback to empty list if null
+      pagination: json['pagination'] != null
+          ? PaginationModel.fromJson(json['pagination'] as Map<String, dynamic>)
+          : null,
     );
   }
 }
@@ -34,9 +36,9 @@ class PaginationModel {
   factory PaginationModel.fromJson(Map<String, dynamic> json) {
     final items = json['items'] as Map<String, dynamic>?;
     return PaginationModel(
-      lastVisiblePage: json['last_visible_page'] as int,
-      hasNextPage: json['has_next_page'] as bool,
-      currentPage: json['current_page'] as int,
+      lastVisiblePage: json['last_visible_page'] as int? ?? 1,
+      hasNextPage: json['has_next_page'] as bool? ?? false,
+      currentPage: json['current_page'] as int? ?? 1,
       count: items?['count'] as int? ?? 0,
     );
   }

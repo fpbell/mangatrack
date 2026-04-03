@@ -28,15 +28,16 @@ class MangaModel {
   });
 
   factory MangaModel.fromJson(Map<String, dynamic> json) {
-    final images = json['images']?['jpg'];
+    final images = json['images']?['jpg'] as Map<String, dynamic>?;
     final genreList =
-        (json['genres'] as List<dynamic>?)
-            ?.map((e) => e['name'] as String)
+        (json['genres'] as List?) // ← List? not List<dynamic>
+            ?.map((e) => e['name']?.toString() ?? '')
+            .where((name) => name.isNotEmpty)
             .toList() ??
         [];
 
     return MangaModel(
-      malId: json['mal_id'] as int,
+      malId: json['mal_id'] as int? ?? 0, // ← guard every field
       title: json['title'] as String?,
       titleEnglish: json['title_english'] as String?,
       imageUrl: images?['image_url'] as String?,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../src/services/jikan_service.dart';
+import '../../../services/jikan_service.dart';
 
 class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
