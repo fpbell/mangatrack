@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mangatrack/screens/browse_screen.dart';
-import 'package:mangatrack/screens/discover_screen.dart';
+import 'package:mangatrack/src/features/discover/presentation/screens/discover_screen.dart';
 import 'package:mangatrack/screens/favourites_screen.dart';
 import 'providers/bottom_nav_provider.dart';
 
