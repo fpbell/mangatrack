@@ -1,4 +1,3 @@
-// domain/entities/manga.entity.dart
 class MangaEntity {
   final int malId;
   final String? title;
@@ -28,7 +27,6 @@ class MangaEntity {
     this.genres = const [],
   });
 
-  // ← add these for storage
   Map<String, dynamic> toJson() => {
     'mal_id': malId,
     'title': title,
@@ -56,10 +54,6 @@ class MangaEntity {
     score: (json['score'] as num?)?.toDouble(),
     scoredBy: json['scored_by'] as int?,
     rank: json['rank'] as int?,
-    genres:
-        (json['genres'] as List?) // ← List? instead of List<dynamic>?
-            ?.map((e) => e.toString()) // ← toString() instead of casting
-            .toList() ??
-        [],
+    genres: (json['genres'] as List?)?.map((e) => e.toString()).toList() ?? [],
   );
 }

@@ -6,7 +6,7 @@ abstract class DiscoverRepository {
   Future<List<MangaEntity>> fetchManga({
     int page = 1,
     String? query,
-    List<int>? genreIds, // ← List<int>
+    List<int>? genreIds,
     int limit = 25,
   });
 

@@ -1,4 +1,3 @@
-// features/discover/domain/entities/genre.entity.dart
 class GenreEntity {
   final int malId;
   final String name;
