@@ -20,60 +20,68 @@ class MangaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: Row(
-          children: [
-            // cover image
-            SizedBox(
-              width: 80,
-              height: 110,
-              child: manga.imageUrl != null
-                  ? Image.network(
-                      manga.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          const Icon(Icons.broken_image),
-                    )
-                  : const Icon(Icons.image_not_supported),
-            ),
-            const SizedBox(width: 12),
-            // info
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      manga.title ?? 'Unknown title',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    if (manga.score != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Score: ${manga.score}',
-                        style: Theme.of(context).textTheme.bodySmall,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // image with star overlay
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // cover image
+                  manga.imageUrl != null
+                      ? Image.network(
+                          manga.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.broken_image, size: 40),
+                          ),
+                        )
+                      : Container(
+                          color: Colors.grey.shade200,
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            size: 40,
+                          ),
+                        ),
+
+                  // ← star icon top right on image
+                  Positioned(
+                    bottom: 6,
+                    right: 6,
+                    child: GestureDetector(
+                      onTap: onFavouriteTap,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: isFavourited ? Colors.orange : Colors.black45,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFavourited ? Icons.star : Icons.star_outline,
+                          color: Colors.white,
+                          size: 25,
+                        ),
                       ),
-                    ],
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            // favourite icon
-            IconButton(
-              icon: Icon(
-                isFavourited ? Icons.bookmark : Icons.bookmark_outline,
-                color: isFavourited
-                    ? Theme.of(context).colorScheme.primary
-                    : null,
-              ),
-              onPressed: onFavouriteTap,
-            ),
-          ],
-        ),
+          ),
+
+          // ← title outside below the image
+          const SizedBox(height: 6),
+          Text(
+            manga.title ?? 'Unknown',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }

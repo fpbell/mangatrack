@@ -1,4 +1,3 @@
-// data/datasources/discover_remote_datasource.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mangatrack/src/features/discover/data/models/genre.model.dart';
 import 'package:mangatrack/src/features/discover/data/models/manga_response.model.dart';
@@ -8,7 +7,7 @@ abstract class DiscoverRemoteDatasource {
   Future<MangaResponseModel> fetchManga({
     int page = 1,
     String? query,
-    List<int>? genreIds, // ← List<int>
+    List<int>? genreIds,
     int limit = 25,
   });
 

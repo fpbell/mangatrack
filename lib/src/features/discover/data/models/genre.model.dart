@@ -1,4 +1,3 @@
-// features/discover/data/models/genre.model.dart
 class GenreModel {
   final int malId;
   final String name;

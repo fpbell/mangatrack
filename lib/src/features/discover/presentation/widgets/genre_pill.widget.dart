@@ -1,11 +1,10 @@
-// presentation/widgets/genre_pill.widget.dart
 import 'package:flutter/material.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/genre.entity.dart';
 
 class GenrePills extends StatelessWidget {
   final List<GenreEntity> genres;
-  final List<int> selectedGenreIds; // ← List<int>
-  final ValueChanged<int> onToggle; // ← toggle instead of select
+  final List<int> selectedGenreIds;
+  final ValueChanged<int> onToggle;
 
   const GenrePills({
     super.key,
@@ -27,11 +26,29 @@ class GenrePills extends StatelessWidget {
           final genre = genres[index];
           final isSelected = selectedGenreIds.contains(genre.malId);
 
-          return FilterChip(
-            label: Text(genre.name),
-            selected: isSelected,
-            onSelected: (_) => onToggle(genre.malId), // ← toggle
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.orange : Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: GestureDetector(
+              onTap: () => onToggle(genre.malId),
+              child: Text(
+                genre.name,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.black87,
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
           );
+          // return FilterChip(
+          //   label: Text(genre.name),
+          //   selected: isSelected,
+          //   onSelected: (_) => onToggle(genre.malId),
+          // );
         },
       ),
     );
