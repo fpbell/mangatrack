@@ -1,9 +1,10 @@
+// presentation/providers/discover_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mangatrack/src/features/discover/data/repositories/discover_repository.dart'; // ← add this
+import 'package:mangatrack/src/features/discover/data/repositories/discover_repository.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/genre.entity.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/manga.entity.dart';
 
-const int _maxPages = 3; // ← add these if missing
+const int _maxPages = 3;
 const int _maxManga = 60;
 
 class DiscoverState {
@@ -42,15 +43,13 @@ class DiscoverState {
     bool? hasNextPage,
     String? query,
     List<int>? selectedGenreIds,
-    bool clearError = false, // ← explicit flag to null out error
+    bool clearError = false,
   }) => DiscoverState(
     mangaList: mangaList ?? this.mangaList,
     genres: genres ?? this.genres,
     isLoading: isLoading ?? this.isLoading,
     isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-    error: clearError
-        ? null
-        : error ?? this.error, // ← clearError takes priority
+    error: clearError ? null : error ?? this.error,
     currentPage: currentPage ?? this.currentPage,
     hasNextPage: hasNextPage ?? this.hasNextPage,
     query: query ?? this.query,
@@ -62,11 +61,13 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
   @override
   DiscoverState build() {
     Future.microtask(() => _init());
-    return const DiscoverState();
+    return const DiscoverState(isLoading: true); // ← start with loading true
   }
 
+  // ← sequential: genres first then manga avoids race condition
   Future<void> _init() async {
-    await Future.wait([fetchGenres(), fetchManga()]);
+    await fetchGenres();
+    await fetchManga();
   }
 
   Future<void> fetchGenres() async {
@@ -87,19 +88,18 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
     );
 
     try {
-      final List<MangaEntity> manga =
-          await ref // ← explicit type
-              .read(discoverRepositoryProvider)
-              .fetchManga(
-                page: 1,
-                query: state.query.isEmpty ? null : state.query,
-                genreIds: state.selectedGenreIds.isEmpty
-                    ? null
-                    : state.selectedGenreIds,
-              );
+      final List<MangaEntity> manga = await ref
+          .read(discoverRepositoryProvider)
+          .fetchManga(
+            page: 1,
+            query: state.query.isEmpty ? null : state.query,
+            genreIds: state.selectedGenreIds.isEmpty
+                ? null
+                : state.selectedGenreIds,
+          );
 
       state = state.copyWith(
-        mangaList: List<MangaEntity>.from(manga), // ← force typed list
+        mangaList: List<MangaEntity>.from(manga),
         isLoading: false,
         currentPage: 1,
         hasNextPage: manga.isNotEmpty,
@@ -115,11 +115,11 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
   }
 
   Future<void> clearSearch() async {
+    if (state.query.isEmpty) return;
     state = state.copyWith(query: '');
     await fetchManga(query: '');
   }
 
-  // ← toggle genre in/out of selected list
   Future<void> toggleGenre(int genreId) async {
     final current = List<int>.from(state.selectedGenreIds);
     if (current.contains(genreId)) {
@@ -139,22 +139,18 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
     state = state.copyWith(isLoadingMore: true);
 
     try {
-      final List<MangaEntity> manga =
-          await ref // ← explicit type
-              .read(discoverRepositoryProvider)
-              .fetchManga(
-                page: state.currentPage + 1,
-                query: state.query.isEmpty ? null : state.query,
-                genreIds: state.selectedGenreIds.isEmpty
-                    ? null
-                    : state.selectedGenreIds,
-              );
+      final List<MangaEntity> manga = await ref
+          .read(discoverRepositoryProvider)
+          .fetchManga(
+            page: state.currentPage + 1,
+            query: state.query.isEmpty ? null : state.query,
+            genreIds: state.selectedGenreIds.isEmpty
+                ? null
+                : state.selectedGenreIds,
+          );
 
       state = state.copyWith(
-        mangaList: List<MangaEntity>.from([
-          ...state.mangaList,
-          ...manga,
-        ]), // ← typed
+        mangaList: List<MangaEntity>.from([...state.mangaList, ...manga]),
         isLoadingMore: false,
         currentPage: state.currentPage + 1,
         hasNextPage: manga.isNotEmpty && !state.reachedCap,

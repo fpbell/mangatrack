@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mangatrack/src/features/favourite/presentation/providers/favourite_provider.dart';
-import 'package:mangatrack/src/features/favourite/presentation/widgets/favourite_card.widget.dart';
-import 'package:mangatrack/src/routing/routes/app_route.router.dart';
-import 'package:mangatrack/src/routing/routes/routes.router.dart';
+import 'package:mangatrack/src/shared/widgets/manga_card.widget.dart'; // ← shared widget
 
 class FavouritesScreen extends ConsumerWidget {
   const FavouritesScreen({super.key});
@@ -15,19 +13,21 @@ class FavouritesScreen extends ConsumerWidget {
     final state = ref.watch(favouriteProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Favourites')),
+      appBar: AppBar(
+        title: const Text(
+          'Favourites',
+          style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700),
+        ),
+      ),
       body: _buildBody(context, ref, state),
     );
   }
 
   Widget _buildBody(BuildContext context, WidgetRef ref, FavouriteState state) {
-    // loading from storage
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // empty state
-    // ↓ replaces: placeholder Text('Your favourite manga will be shown here.')
     if (state.favourites.isEmpty) {
       return Center(
         child: Column(
@@ -54,21 +54,50 @@ class FavouritesScreen extends ConsumerWidget {
       );
     }
 
-    // favourites list
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: state.favourites.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final manga = state.favourites[index];
-        return FavouriteCard(
-          manga: manga,
-          onRemove: () =>
-              ref.read(favouriteProvider.notifier).toggleFavourite(manga),
-          onTap: () => {},
-          // context.push(AppRoute.imageViewer.path, extra: manga.imageUrl),
-        );
-      },
+    // ← same GridView layout as DiscoverScreen
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 0.7,
+            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final manga = state.favourites[index];
+              return MangaCard(
+                manga: manga,
+                isFavourited: true,
+                onFavouriteTap: () =>
+                    ref.read(favouriteProvider.notifier).toggleFavourite(manga),
+                onTap: () => context.push(
+                  '/viewer',
+                  extra:
+                      manga.imageUrl ?? 'https://picsum.photos/id/25/600/3000',
+                ),
+              );
+            }, childCount: state.favourites.length),
+          ),
+        ),
+
+        // item count footer
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Center(
+              child: Text(
+                '${state.favourites.length} manga saved',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

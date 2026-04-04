@@ -1,5 +1,7 @@
+// main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mangatrack/src/core/theme/app_theme.dart';
 import 'package:mangatrack/src/routing/app.router.dart';
 
 void main() => runApp(const ProviderScope(child: MangaTrackApp()));
@@ -12,10 +14,8 @@ class MangaTrackApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'MangaTrack',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light, // ← apply here
+      darkTheme: AppTheme.dark, // ← optional dark mode
       routerConfig: goRouter,
     );
   }

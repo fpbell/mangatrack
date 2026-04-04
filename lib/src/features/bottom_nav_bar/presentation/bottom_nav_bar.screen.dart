@@ -30,6 +30,8 @@ class BottomNavBar extends ConsumerWidget {
           currentIndex: currentIndex,
           onTap: (index) =>
               ref.read(bottomNavProvider.notifier).setIndex(index),
+          // ← do not set selectedItemColor or selectedLabelStyle here
+          // theme handles it automatically
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.explore_outlined),

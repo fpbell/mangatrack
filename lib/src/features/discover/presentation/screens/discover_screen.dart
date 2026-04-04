@@ -1,9 +1,11 @@
+// presentation/screens/discover.screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mangatrack/src/core/utils/debouncer.dart';
 import 'package:mangatrack/src/features/discover/presentation/providers/discover_provider.dart';
 import 'package:mangatrack/src/features/discover/presentation/widgets/genre_pill.widget.dart';
-import 'package:mangatrack/src/features/discover/presentation/widgets/manga_card.widget.dart';
+import 'package:mangatrack/src/shared/widgets/manga_card.widget.dart';
 import 'package:mangatrack/src/features/favourite/presentation/providers/favourite_provider.dart';
 
 class DiscoverScreen extends ConsumerStatefulWidget {
@@ -17,6 +19,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 500);
+  bool _isSearching = false; // ← tracks search bar visibility
 
   @override
   void initState() {
@@ -39,6 +42,17 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     }
   }
 
+  void _openSearch() {
+    setState(() => _isSearching = true);
+  }
+
+  void _closeSearch() {
+    FocusScope.of(context).unfocus(); // ← dismiss keyboard
+    setState(() => _isSearching = false);
+    _searchController.clear();
+    // ← no notifier.clearSearch() here — correct ✅
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(discoverProvider);
@@ -49,62 +63,54 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          textAlignVertical: TextAlignVertical.center,
-          cursorColor: Colors.black,
-          autofocus: true,
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.symmetric(horizontal: 12),
-            focusColor: Colors.orange,
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            hintText: 'Search manga...',
-            border: InputBorder.none,
-            filled: true,
-            fillColor: Colors.grey.shade100,
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: state.query.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                textAlignVertical: TextAlignVertical.center,
+                cursorColor: Colors.orange,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  hintText: 'Search manga...',
+                  border: InputBorder.none,
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.close),
                     onPressed: () {
-                      _searchController.clear();
-                      notifier.clearSearch();
+                      if (_searchController.text.isNotEmpty) {
+                        _debouncer.cancel();
+                        _searchController.clear();
+                        notifier.clearSearch();
+                      } else {
+                        _closeSearch();
+                      }
                     },
-                  )
-                : null,
-          ),
-          onChanged: (query) => _debouncer.run(() => notifier.search(query)),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 8),
-
-            const SizedBox(height: 15),
-            if (state.genres.isNotEmpty) ...[
-              GenrePills(
-                genres: state.genres,
-                selectedGenreIds: state.selectedGenreIds,
-                onToggle: notifier.toggleGenre,
+                  ),
+                ),
+                onChanged: (query) =>
+                    _debouncer.run(() => notifier.search(query)),
+              )
+            : const Text(
+                'MangaTrack',
+                style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 8),
-            ],
-            const SizedBox(height: 15),
-            Expanded(child: _buildBody(state, notifier, favouriteIds)),
-          ],
-        ),
+        actions: [
+          if (!_isSearching)
+            IconButton(icon: const Icon(Icons.search), onPressed: _openSearch),
+        ],
       ),
+      // ← replaced: Padding + Column
+      body: _buildBody(state, notifier, favouriteIds),
     );
   }
 
@@ -113,11 +119,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     DiscoverNotifier notifier,
     Set<int> favouriteIds,
   ) {
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (state.error != null) {
+    if (state.error != null && state.mangaList.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -135,58 +137,90 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       );
     }
 
-    if (state.mangaList.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 64,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No manga found',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Try a different search or genre',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-      );
-    }
-
     return RefreshIndicator(
       onRefresh: () async => notifier.refresh(),
-      child: GridView.builder(
+      child: CustomScrollView(
         controller: _scrollController,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 8,
-          childAspectRatio:
-              0.55, // ← shorter ratio gives more height for image + title
-        ),
-        itemCount: state.mangaList.length + 1,
-        itemBuilder: (context, index) {
-          if (index == state.mangaList.length) {
-            // footer spans both columns
-            return GridTile(child: _buildFooter(state));
-          }
+        slivers: [
+          // ← genre pills always visible regardless of loading state
+          if (state.genres.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: GenrePills(
+                  genres: state.genres,
+                  selectedGenreIds: state.selectedGenreIds,
+                  onToggle: notifier.toggleGenre,
+                ),
+              ),
+            ),
 
-          final manga = state.mangaList[index];
-          return MangaCard(
-            manga: manga,
-            isFavourited: favouriteIds.contains(manga.malId),
-            onFavouriteTap: () =>
-                ref.read(favouriteProvider.notifier).toggleFavourite(manga),
-            onTap: () {},
-          );
-        },
+          // ← loading indicator only in manga list area
+          if (state.isLoading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          // ← empty state
+          else if (state.mangaList.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No manga found',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Try a different search or genre',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          // ← manga grid
+          else ...[
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 0.7,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final manga = state.mangaList[index];
+                  return MangaCard(
+                    manga: manga,
+                    isFavourited: favouriteIds.contains(manga.malId),
+                    onFavouriteTap: () => ref
+                        .read(favouriteProvider.notifier)
+                        .toggleFavourite(manga),
+                    onTap: () => context.push(
+                      // ← add navigation
+                      '/viewer',
+                      extra:
+                          manga.imageUrl ??
+                          'https://picsum.photos/id/25/600/3000',
+                    ),
+                  );
+                }, childCount: state.mangaList.length),
+              ),
+            ),
+
+            // footer
+            SliverToBoxAdapter(child: _buildFooter(state)),
+          ],
+        ],
       ),
     );
   }
