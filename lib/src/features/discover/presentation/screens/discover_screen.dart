@@ -51,6 +51,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     _searchController.clear();
   }
 
+  void _dismissKeyboard() {
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(discoverProvider);
@@ -59,55 +63,62 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       favouriteProvider.select((s) => s.favouriteIds),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                textAlignVertical: TextAlignVertical.center,
-                cursorColor: Colors.orange,
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(10.0),
+    return GestureDetector(
+      onTap: _dismissKeyboard, // ← dismiss on tap anywhere
+      behavior: HitTestBehavior.opaque, // ← catches taps on all areas
+      child: Scaffold(
+        appBar: AppBar(
+          title: _isSearching
+              ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  textAlignVertical: TextAlignVertical.center,
+                  cursorColor: Colors.orange,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    hintText: 'Search manga...',
+                    border: InputBorder.none,
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        if (_searchController.text.isNotEmpty) {
+                          _debouncer.cancel();
+                          _searchController.clear();
+                          notifier.clearSearch();
+                        } else {
+                          _closeSearch();
+                        }
+                      },
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  hintText: 'Search manga...',
-                  border: InputBorder.none,
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      if (_searchController.text.isNotEmpty) {
-                        _debouncer.cancel();
-                        _searchController.clear();
-                        notifier.clearSearch();
-                      } else {
-                        _closeSearch();
-                      }
-                    },
-                  ),
+                  onChanged: (query) =>
+                      _debouncer.run(() => notifier.search(query)),
+                )
+              : const Text(
+                  'MangaTrack',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700),
                 ),
-                onChanged: (query) =>
-                    _debouncer.run(() => notifier.search(query)),
-              )
-            : const Text(
-                'MangaTrack',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700),
+          actions: [
+            if (!_isSearching)
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: _openSearch,
               ),
-        actions: [
-          if (!_isSearching)
-            IconButton(icon: const Icon(Icons.search), onPressed: _openSearch),
-        ],
+          ],
+        ),
+        body: _buildBody(state, notifier, favouriteIds),
       ),
-      body: _buildBody(state, notifier, favouriteIds),
     );
   }
 
@@ -210,7 +221,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 }, childCount: state.mangaList.length),
               ),
             ),
-
             SliverToBoxAdapter(child: _buildFooter(state)),
           ],
         ],
