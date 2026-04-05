@@ -9,10 +9,10 @@ class MangaResponseModel {
   factory MangaResponseModel.fromJson(Map<String, dynamic> json) {
     return MangaResponseModel(
       data:
-          (json['data'] as List?) // ← List? instead of List<dynamic>
+          (json['data'] as List?)
               ?.map((e) => MangaModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
-          [], // ← fallback to empty list if null
+          [],
       pagination: json['pagination'] != null
           ? PaginationModel.fromJson(json['pagination'] as Map<String, dynamic>)
           : null,

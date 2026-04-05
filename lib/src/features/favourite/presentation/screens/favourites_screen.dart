@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mangatrack/src/features/favourite/presentation/providers/favourite_provider.dart';
-import 'package:mangatrack/src/shared/widgets/manga_card.widget.dart'; // ← shared widget
+import 'package:mangatrack/src/features/favourite/presentation/widgets/favourite_card.widget.dart'; // ← import
 
 class FavouritesScreen extends ConsumerWidget {
   const FavouritesScreen({super.key});
@@ -13,12 +13,7 @@ class FavouritesScreen extends ConsumerWidget {
     final state = ref.watch(favouriteProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Favourites',
-          style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Favourites')),
       body: _buildBody(context, ref, state),
     );
   }
@@ -45,7 +40,7 @@ class FavouritesScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Start exploring and bookmark manga you love!',
+              'Start exploring!',
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
@@ -54,11 +49,10 @@ class FavouritesScreen extends ConsumerWidget {
       );
     }
 
-    // ← same GridView layout as DiscoverScreen
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
@@ -68,25 +62,26 @@ class FavouritesScreen extends ConsumerWidget {
             ),
             delegate: SliverChildBuilderDelegate((context, index) {
               final manga = state.favourites[index];
-              return MangaCard(
+              return FavouriteCard(
+                // ← use extracted widget
                 manga: manga,
-                isFavourited: true,
-                onFavouriteTap: () =>
+                onRemove: () =>
                     ref.read(favouriteProvider.notifier).toggleFavourite(manga),
                 onTap: () => context.push(
                   '/viewer',
-                  extra:
-                      manga.imageUrl ?? 'https://picsum.photos/id/25/600/3000',
+                  extra: {
+                    'imageUrl': manga.largeImageUrl ?? manga.imageUrl ?? '',
+                    'title': manga.title ?? 'Image Viewer',
+                  },
                 ),
               );
             }, childCount: state.favourites.length),
           ),
         ),
 
-        // item count footer
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 24),
+            padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Text(
                 '${state.favourites.length} manga saved',

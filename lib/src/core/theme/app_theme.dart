@@ -7,17 +7,31 @@ class AppTheme {
     useMaterial3: true,
     textTheme: GoogleFonts.montserratTextTheme(),
 
+    scaffoldBackgroundColor: Colors.grey.shade100,
+
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.grey.shade100,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: GoogleFonts.montserrat(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
+      ),
+    ),
+
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
       selectedLabelStyle: GoogleFonts.montserrat(
         fontSize: 12,
-        fontWeight: FontWeight.w700, // ← bold when selected
+        fontWeight: FontWeight.w700,
       ),
       unselectedLabelStyle: GoogleFonts.montserrat(
         fontSize: 11,
         fontWeight: FontWeight.w400,
       ),
-      selectedItemColor:
-          Colors.orange.shade700, // ← orange for selected icon + label
+      selectedItemColor: Colors.orange,
       unselectedItemColor: Colors.grey,
     ),
   );

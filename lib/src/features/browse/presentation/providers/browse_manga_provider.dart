@@ -1,15 +1,14 @@
-// features/browse/presentation/providers/browse_manga_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mangatrack/src/core/constants/app_constants.dart';
 import 'package:mangatrack/src/features/discover/data/models/manga.model.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/manga.entity.dart';
 import 'package:mangatrack/src/services/jikan_service.dart';
 
-// features/browse/presentation/providers/browse_manga_provider.dart
 class BrowseMangaState {
   final List<MangaEntity> mangaList;
   final bool isLoading;
-  final bool isLoadingMore; // ← true when pages 2-4 are loading
+  final bool isLoadingMore;
   final String? error;
 
   const BrowseMangaState({
@@ -43,10 +42,13 @@ class BrowseMangaNotifier extends Notifier<BrowseMangaState> {
   Future<void> fetchManga() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      for (int page = 1; page <= 4; page++) {
-        final raw = await JikanService.fetchManga(page: page, limit: 25);
-        final dataList = raw['data'] as List? ?? [];
+      for (int page = 1; page <= AppConstants.browsePages; page++) {
+        final raw = await JikanService.fetchManga(
+          page: page,
+          limit: AppConstants.browseLimit,
+        );
 
+        final dataList = raw['data'] as List? ?? [];
         debugPrint('[BrowseManga] page $page: ${dataList.length} items');
 
         final manga = dataList
@@ -55,24 +57,21 @@ class BrowseMangaNotifier extends Notifier<BrowseMangaState> {
             .toList();
 
         if (page == 1) {
-          // ← first page: show immediately, switch to isLoadingMore
           state = state.copyWith(
             mangaList: manga,
-            isLoading: false, // ← full screen spinner stops
-            isLoadingMore: true, // ← subtle indicator continues
+            isLoading: false,
+            isLoadingMore: true,
           );
-        } else if (page == 4) {
-          // ← last page: append and stop all loading
+        } else if (page == AppConstants.browsePages) {
           state = state.copyWith(
             mangaList: [...state.mangaList, ...manga],
-            isLoadingMore: false, // ← all done
+            isLoadingMore: false,
           );
         } else {
-          // ← middle pages: keep appending silently
           state = state.copyWith(mangaList: [...state.mangaList, ...manga]);
         }
 
-        if (page < 4) {
+        if (page < AppConstants.browsePages) {
           await Future.delayed(const Duration(milliseconds: 1000));
         }
       }
@@ -94,6 +93,8 @@ class BrowseMangaNotifier extends Notifier<BrowseMangaState> {
     title: model.title,
     titleEnglish: model.titleEnglish,
     imageUrl: model.imageUrl,
+    smallImageUrl: model.smallImageUrl,
+    largeImageUrl: model.largeImageUrl,
     synopsis: model.synopsis,
     status: model.status,
     chapters: model.chapters,

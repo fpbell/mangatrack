@@ -1,11 +1,10 @@
-// features/favourite/presentation/providers/favourite_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/manga.entity.dart';
 import 'package:mangatrack/src/services/secure_storage.service.dart';
 
 class FavouriteState {
   final List<MangaEntity> favourites;
-  final Set<int> favouriteIds; // ← for O(1) lookup in discover screen
+  final Set<int> favouriteIds;
   final bool isLoading;
 
   const FavouriteState({
@@ -37,7 +36,6 @@ class FavouriteNotifier extends Notifier<FavouriteState> {
       final raw = await SecureStorageService.loadFavourites();
 
       if (raw.isEmpty) {
-        // ← guard empty list
         state = state.copyWith(isLoading: false);
         return;
       }
@@ -50,9 +48,7 @@ class FavouriteNotifier extends Notifier<FavouriteState> {
         isLoading: false,
       );
     } catch (_) {
-      state = state.copyWith(
-        isLoading: false,
-      ); // ← never crash, just clear loading
+      state = state.copyWith(isLoading: false);
     }
   }
 

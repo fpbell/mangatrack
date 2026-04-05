@@ -19,13 +19,13 @@ class DiscoverRemoteDatasourceImpl implements DiscoverRemoteDatasource {
   Future<MangaResponseModel> fetchManga({
     int page = 1,
     String? query,
-    List<int>? genreIds, // ← List<int>
+    List<int>? genreIds,
     int limit = 25,
   }) async {
     final json = await JikanService.fetchManga(
       page: page,
       query: query,
-      genreIds: genreIds, // ← pass list
+      genreIds: genreIds,
       limit: limit,
     );
     return MangaResponseModel.fromJson(json);

@@ -1,12 +1,10 @@
-// features/browse/presentation/screens/browse.screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mangatrack/src/features/browse/presentation/providers/browse_manga_provider.dart';
 import 'package:mangatrack/src/features/browse/presentation/providers/browse_provider.dart';
-import 'package:mangatrack/src/features/discover/domain/entities/manga.entity.dart';
 import 'package:mangatrack/src/features/favourite/presentation/providers/favourite_provider.dart';
-import 'package:mangatrack/src/shared/widgets/manga_card.widget.dart'; // ← shared
+import 'package:mangatrack/src/shared/widgets/manga_card.widget.dart';
 
 class BrowseScreen extends ConsumerStatefulWidget {
   const BrowseScreen({super.key});
@@ -114,7 +112,6 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
           'Browse',
           style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700),
         ),
-        // ← thin loading bar while pages 2-4 load
         bottom: state.isLoadingMore
             ? const PreferredSize(
                 preferredSize: Size.fromHeight(2),
@@ -163,7 +160,6 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
     );
   }
 
-  // ── LEFT PANEL ─────────────────────────────────────────────────────────
   Widget _buildLeftPanel(BrowseState state, int activeIndex) {
     return SizedBox(
       width: 100,
@@ -180,9 +176,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
-                color: isActive
-                    ? Colors.orange.withOpacity(0.1)
-                    : Colors.transparent,
+                color: isActive ? Colors.orange.shade50 : Colors.transparent,
                 border: Border(
                   left: BorderSide(
                     color: isActive ? Colors.orange : Colors.transparent,
@@ -197,7 +191,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                  color: isActive ? Colors.orange : Colors.black87,
+                  color: isActive ? Colors.orange.shade900 : Colors.black87,
                 ),
               ),
             ),
@@ -207,7 +201,6 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
     );
   }
 
-  // ── RIGHT PANEL ────────────────────────────────────────────────────────
   Widget _buildRightPanel(BrowseState state) {
     final favouriteIds = ref.watch(
       favouriteProvider.select((s) => s.favouriteIds),
@@ -216,22 +209,15 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
 
     return Column(
       children: [
-        // ← single sticky header that updates to current active genre
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: Theme.of(
-              context,
-            ).colorScheme.surface, // ← color inside decoration only
+            color: Theme.of(context).colorScheme.surface,
             border: Border(
-              bottom: BorderSide(
-                color: Colors.orange.withOpacity(0.3),
-                width: 1,
-              ),
+              bottom: BorderSide(color: Colors.orange.shade200, width: 1),
             ),
           ),
-          // ← remove: color: Theme.of(context).colorScheme.surface
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: Align(
@@ -244,29 +230,25 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Colors.orange,
+                  color: Colors.black,
                 ),
               ),
             ),
           ),
         ),
 
-        // ← scrollable manga sections
         Expanded(
           child: CustomScrollView(
             controller: _rightPanelController,
             slivers: [
               for (int i = 0; i < state.activeGenres.length; i++) ...[
-                // ← section divider with genre name (not pinned)
                 SliverToBoxAdapter(
                   child: Container(
-                    key: _sectionKeys[i], // ← key for position tracking
+                    key: _sectionKeys[i],
                     padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
-                    child: Divider(thickness: 1, color: Colors.grey),
                   ),
                 ),
 
-                // manga grid per genre
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                   sliver: SliverGrid(
@@ -284,15 +266,17 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                         return MangaCard(
                           manga: manga,
                           isFavourited: favouriteIds.contains(manga.malId),
+                          useRegularImage: true,
                           onFavouriteTap: () => ref
                               .read(favouriteProvider.notifier)
                               .toggleFavourite(manga),
                           onTap: () => context.push(
-                            // ← add navigation
                             '/viewer',
-                            extra:
-                                manga.imageUrl ??
-                                'https://picsum.photos/id/25/600/3000',
+                            extra: {
+                              'imageUrl':
+                                  manga.largeImageUrl ?? manga.imageUrl ?? '',
+                              'title': manga.title ?? 'Image Viewer',
+                            },
                           ),
                         );
                       },

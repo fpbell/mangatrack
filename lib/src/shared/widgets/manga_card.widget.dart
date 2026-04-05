@@ -1,4 +1,3 @@
-// presentation/widgets/manga_card.widget.dart
 import 'package:flutter/material.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/manga.entity.dart';
 
@@ -7,6 +6,7 @@ class MangaCard extends StatelessWidget {
   final bool isFavourited;
   final VoidCallback onFavouriteTap;
   final VoidCallback onTap;
+  final bool useRegularImage;
 
   const MangaCard({
     super.key,
@@ -14,7 +14,11 @@ class MangaCard extends StatelessWidget {
     required this.isFavourited,
     required this.onFavouriteTap,
     required this.onTap,
+    this.useRegularImage = false,
   });
+
+  String? get _imageUrl =>
+      useRegularImage ? manga.imageUrl : manga.smallImageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -25,10 +29,9 @@ class MangaCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // cover image
-            manga.imageUrl != null
+            _imageUrl != null
                 ? Image.network(
-                    manga.imageUrl!,
+                    _imageUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: Colors.grey.shade200,
@@ -40,7 +43,6 @@ class MangaCard extends StatelessWidget {
                     child: const Icon(Icons.image_not_supported, size: 40),
                   ),
 
-            // bottom gradient + title + star
             Positioned(
               left: 0,
               right: 0,
@@ -53,11 +55,10 @@ class MangaCard extends StatelessWidget {
                     colors: [Colors.black87, Colors.transparent],
                   ),
                 ),
-                padding: const EdgeInsets.fromLTRB(8, 24, 8, 6),
+                padding: const EdgeInsets.fromLTRB(8, 26, 8, 8),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    // ← Expanded prevents title from overflowing into star
                     Expanded(
                       child: Text(
                         manga.title ?? 'Unknown',
@@ -65,23 +66,25 @@ class MangaCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6), // ← gap between title and star
+                    const SizedBox(width: 6),
                     GestureDetector(
                       onTap: onFavouriteTap,
                       child: Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.black45,
+                        decoration: BoxDecoration(
+                          color: isFavourited
+                              ? Colors.orange.shade700
+                              : Colors.black45,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           isFavourited ? Icons.star : Icons.star_outline,
-                          color: isFavourited ? Colors.amber : Colors.white,
+                          color: Colors.white,
                           size: 18,
                         ),
                       ),

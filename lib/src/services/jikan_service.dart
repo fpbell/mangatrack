@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mangatrack/src/core/constants/app_constants.dart';
 
 class JikanService {
   static const String _baseUrl = 'https://api.jikan.moe/v4';
@@ -10,12 +11,11 @@ class JikanService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  // services/jikan_service.dart
   static Future<Map<String, dynamic>> fetchManga({
     String? query,
     List<int>? genreIds,
     int page = 1,
-    int limit = 25, // ← max allowed by Jikan
+    int limit = AppConstants.pageLimit,
   }) async {
     final params = <String, String>{
       'page': page.toString(),

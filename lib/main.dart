@@ -1,4 +1,3 @@
-// main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mangatrack/src/core/theme/app_theme.dart';
@@ -14,8 +13,8 @@ class MangaTrackApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'MangaTrack',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light, // ← apply here
-      darkTheme: AppTheme.dark, // ← optional dark mode
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: goRouter,
     );
   }

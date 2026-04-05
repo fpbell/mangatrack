@@ -1,4 +1,3 @@
-// services/secure_storage.service.dart
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -14,17 +13,15 @@ class SecureStorageService {
     try {
       final raw = await _storage.read(key: _key);
 
-      if (raw == null || raw.isEmpty) return []; // ← guard null and empty
+      if (raw == null || raw.isEmpty) return [];
 
       final decoded = jsonDecode(raw);
 
-      if (decoded == null || decoded is! List) return []; // ← guard non-list
+      if (decoded == null || decoded is! List) return [];
 
-      return decoded
-          .whereType<Map<String, dynamic>>() // ← safely cast each item
-          .toList();
+      return decoded.whereType<Map<String, dynamic>>().toList();
     } catch (_) {
-      return []; // ← if anything fails, return empty instead of crashing
+      return [];
     }
   }
 

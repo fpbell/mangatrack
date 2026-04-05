@@ -1,11 +1,8 @@
-// presentation/providers/discover_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mangatrack/src/core/constants/app_constants.dart';
 import 'package:mangatrack/src/features/discover/data/repositories/discover_repository.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/genre.entity.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/manga.entity.dart';
-
-const int _maxPages = 3;
-const int _maxManga = 60;
 
 class DiscoverState {
   final List<MangaEntity> mangaList;
@@ -15,8 +12,9 @@ class DiscoverState {
   final String? error;
   final int currentPage;
   final bool hasNextPage;
+  final bool reachedEnd;
   final String query;
-  final List<int> selectedGenreIds;
+  final int? selectedGenreId;
 
   const DiscoverState({
     this.mangaList = const [],
@@ -26,12 +24,14 @@ class DiscoverState {
     this.error,
     this.currentPage = 1,
     this.hasNextPage = true,
+    this.reachedEnd = false,
     this.query = '',
-    this.selectedGenreIds = const [],
+    this.selectedGenreId,
   });
 
   bool get reachedCap =>
-      currentPage >= _maxPages || mangaList.length >= _maxManga;
+      currentPage >= AppConstants.maxPages ||
+      mangaList.length >= AppConstants.maxManga;
 
   DiscoverState copyWith({
     List<MangaEntity>? mangaList,
@@ -41,8 +41,10 @@ class DiscoverState {
     String? error,
     int? currentPage,
     bool? hasNextPage,
+    bool? reachedEnd,
     String? query,
-    List<int>? selectedGenreIds,
+    int? selectedGenreId,
+    bool clearGenre = false,
     bool clearError = false,
   }) => DiscoverState(
     mangaList: mangaList ?? this.mangaList,
@@ -52,8 +54,11 @@ class DiscoverState {
     error: clearError ? null : error ?? this.error,
     currentPage: currentPage ?? this.currentPage,
     hasNextPage: hasNextPage ?? this.hasNextPage,
+    reachedEnd: reachedEnd ?? this.reachedEnd,
     query: query ?? this.query,
-    selectedGenreIds: selectedGenreIds ?? this.selectedGenreIds,
+    selectedGenreId: clearGenre
+        ? null
+        : selectedGenreId ?? this.selectedGenreId,
   );
 }
 
@@ -61,10 +66,9 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
   @override
   DiscoverState build() {
     Future.microtask(() => _init());
-    return const DiscoverState(isLoading: true); // ← start with loading true
+    return const DiscoverState(isLoading: true);
   }
 
-  // ← sequential: genres first then manga avoids race condition
   Future<void> _init() async {
     await fetchGenres();
     await fetchManga();
@@ -79,12 +83,13 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
     }
   }
 
-  Future<void> fetchManga({String? query, List<int>? genreIds}) async {
+  Future<void> fetchManga({String? query, int? genreId}) async {
     state = state.copyWith(
       isLoading: true,
       clearError: true,
+      reachedEnd: false,
       query: query ?? state.query,
-      selectedGenreIds: genreIds ?? state.selectedGenreIds,
+      selectedGenreId: genreId ?? state.selectedGenreId,
     );
 
     try {
@@ -93,9 +98,10 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
           .fetchManga(
             page: 1,
             query: state.query.isEmpty ? null : state.query,
-            genreIds: state.selectedGenreIds.isEmpty
-                ? null
-                : state.selectedGenreIds,
+            genreIds: state.selectedGenreId != null
+                ? [state.selectedGenreId!]
+                : null,
+            limit: AppConstants.pageLimit,
           );
 
       state = state.copyWith(
@@ -103,6 +109,7 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
         isLoading: false,
         currentPage: 1,
         hasNextPage: manga.isNotEmpty,
+        reachedEnd: manga.isEmpty,
         clearError: true,
       );
     } catch (e) {
@@ -120,40 +127,62 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
     await fetchManga(query: '');
   }
 
-  Future<void> toggleGenre(int genreId) async {
-    final current = List<int>.from(state.selectedGenreIds);
-    if (current.contains(genreId)) {
-      current.remove(genreId);
-    } else {
-      current.add(genreId);
-    }
-    await fetchManga(genreIds: current);
-  }
-
-  Future<void> clearGenres() async {
-    await fetchManga(genreIds: []);
+  Future<void> selectGenre(int genreId) async {
+    final isSame = state.selectedGenreId == genreId;
+    state = state.copyWith(
+      clearGenre: isSame,
+      selectedGenreId: isSame ? null : genreId,
+    );
+    await fetchManga();
   }
 
   Future<void> loadNextPage() async {
-    if (state.reachedCap || !state.hasNextPage || state.isLoadingMore) return;
+    if (state.reachedEnd || state.isLoadingMore || !state.hasNextPage) return;
+
     state = state.copyWith(isLoadingMore: true);
 
     try {
+      final nextPage = state.currentPage + 1;
+      final remaining = AppConstants.maxManga - state.mangaList.length;
+
+      if (remaining <= 0) {
+        state = state.copyWith(
+          isLoadingMore: false,
+          hasNextPage: false,
+          reachedEnd: true,
+        );
+        return;
+      }
+
       final List<MangaEntity> manga = await ref
           .read(discoverRepositoryProvider)
           .fetchManga(
-            page: state.currentPage + 1,
+            page: nextPage,
             query: state.query.isEmpty ? null : state.query,
-            genreIds: state.selectedGenreIds.isEmpty
-                ? null
-                : state.selectedGenreIds,
+            genreIds: state.selectedGenreId != null
+                ? [state.selectedGenreId!]
+                : null,
+            limit: remaining.clamp(1, AppConstants.pageLimit),
           );
 
+      final trimmed = manga.take(remaining).toList();
+
+      final updatedList = List<MangaEntity>.from([
+        ...state.mangaList,
+        ...trimmed,
+      ]);
+
+      final hitPageCap = nextPage >= AppConstants.maxPages;
+      final hitMangaCap = updatedList.length >= AppConstants.maxManga;
+      final noMoreFromApi = manga.isEmpty;
+      final isEnd = hitPageCap || hitMangaCap || noMoreFromApi;
+
       state = state.copyWith(
-        mangaList: List<MangaEntity>.from([...state.mangaList, ...manga]),
+        mangaList: updatedList,
         isLoadingMore: false,
-        currentPage: state.currentPage + 1,
-        hasNextPage: manga.isNotEmpty && !state.reachedCap,
+        currentPage: nextPage,
+        hasNextPage: !isEnd,
+        reachedEnd: isEnd,
       );
     } catch (e) {
       state = state.copyWith(isLoadingMore: false, error: e.toString());
@@ -161,7 +190,7 @@ class DiscoverNotifier extends Notifier<DiscoverState> {
   }
 
   void refresh() =>
-      fetchManga(query: state.query, genreIds: state.selectedGenreIds);
+      fetchManga(query: state.query, genreId: state.selectedGenreId);
 }
 
 final discoverProvider = NotifierProvider<DiscoverNotifier, DiscoverState>(

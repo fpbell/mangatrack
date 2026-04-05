@@ -4,20 +4,6 @@ import 'package:mangatrack/src/features/bottom_nav_bar/presentation/bottom_nav_b
 import 'package:mangatrack/src/routing/routes/app_route.router.dart';
 import 'package:mangatrack/src/routing/routes/routes.router.dart';
 
-// final _router = GoRouter(
-//   initialLocation: '/',
-//   routes: [
-//     GoRoute(path: '/', builder: (context, state) => const MainShell()),
-//     GoRoute(
-//       path: '/viewer',
-//       builder: (context, state) {
-//         final imageUrl = state.extra as String;
-//         return ImageViewerScreen(imageUrl: imageUrl);
-//       },
-//     ),
-//   ],
-// );
-
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 final goRouter = GoRouter(
@@ -38,15 +24,8 @@ final goRouter = GoRouter(
 
 class MyNavigatorObserver extends NavigatorObserver {
   @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    // logger.i('PREVIOUS PAGE: ${previousRoute?.settings.name}');
-    // logger.i('NEW PAGE: ${route.settings.name}');
-    // logger.i('WITH ARGUMENTS: ${route.settings.arguments}');
-  }
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {}
 
   @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    // logger.i('PREVIOUS PAGE: ${previousRoute?.settings.name}');
-    // logger.i('NEW PAGE: ${route.settings.name}');
-  }
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {}
 }

@@ -1,4 +1,3 @@
-// features/browse/presentation/providers/browse_genre_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mangatrack/src/features/discover/data/repositories/discover_repository.dart';

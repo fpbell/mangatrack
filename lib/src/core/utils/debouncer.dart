@@ -1,4 +1,3 @@
-// core/utils/debouncer.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 
@@ -14,7 +13,7 @@ class Debouncer {
   }
 
   void cancel() {
-    _timer?.cancel(); // ← cancels any pending timer
+    _timer?.cancel();
     _timer = null;
   }
 }

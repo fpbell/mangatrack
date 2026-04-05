@@ -1,5 +1,4 @@
-// data/repositories/discover_repository.dart
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // ← add this
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mangatrack/src/features/discover/data/datasources/discover_remote_datasource.dart';
 import 'package:mangatrack/src/features/discover/data/models/genre.model.dart';
 import 'package:mangatrack/src/features/discover/data/models/manga.model.dart';
@@ -38,6 +37,8 @@ class DiscoverRepositoryImpl implements DiscoverRepository {
     title: model.title,
     titleEnglish: model.titleEnglish,
     imageUrl: model.imageUrl,
+    smallImageUrl: model.smallImageUrl,
+    largeImageUrl: model.largeImageUrl,
     synopsis: model.synopsis,
     status: model.status,
     chapters: model.chapters,
@@ -52,7 +53,6 @@ class DiscoverRepositoryImpl implements DiscoverRepository {
       GenreEntity(malId: model.malId, name: model.name, count: model.count);
 }
 
-// ← add this
 final discoverRepositoryProvider = Provider<DiscoverRepository>((ref) {
   return DiscoverRepositoryImpl(ref.read(discoverRemoteDatasourceProvider));
 });

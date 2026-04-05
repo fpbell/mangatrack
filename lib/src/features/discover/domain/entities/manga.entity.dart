@@ -3,6 +3,8 @@ class MangaEntity {
   final String? title;
   final String? titleEnglish;
   final String? imageUrl;
+  final String? smallImageUrl;
+  final String? largeImageUrl;
   final String? synopsis;
   final String? status;
   final int? chapters;
@@ -17,6 +19,8 @@ class MangaEntity {
     this.title,
     this.titleEnglish,
     this.imageUrl,
+    this.smallImageUrl,
+    this.largeImageUrl,
     this.synopsis,
     this.status,
     this.chapters,
@@ -32,6 +36,8 @@ class MangaEntity {
     'title': title,
     'title_english': titleEnglish,
     'image_url': imageUrl,
+    'small_image_url': smallImageUrl,
+    'large_image_url': largeImageUrl,
     'synopsis': synopsis,
     'status': status,
     'chapters': chapters,
@@ -47,6 +53,8 @@ class MangaEntity {
     title: json['title'] as String?,
     titleEnglish: json['title_english'] as String?,
     imageUrl: json['image_url'] as String?,
+    smallImageUrl: json['small_image_url'] as String?,
+    largeImageUrl: json['large_image_url'] as String?,
     synopsis: json['synopsis'] as String?,
     status: json['status'] as String?,
     chapters: json['chapters'] as int?,

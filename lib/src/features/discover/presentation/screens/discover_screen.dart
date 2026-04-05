@@ -1,4 +1,3 @@
-// presentation/screens/discover.screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,7 +18,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 500);
-  bool _isSearching = false; // ← tracks search bar visibility
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -47,10 +46,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   }
 
   void _closeSearch() {
-    FocusScope.of(context).unfocus(); // ← dismiss keyboard
+    FocusScope.of(context).unfocus();
     setState(() => _isSearching = false);
     _searchController.clear();
-    // ← no notifier.clearSearch() here — correct ✅
   }
 
   @override
@@ -109,7 +107,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             IconButton(icon: const Icon(Icons.search), onPressed: _openSearch),
         ],
       ),
-      // ← replaced: Padding + Column
       body: _buildBody(state, notifier, favouriteIds),
     );
   }
@@ -142,25 +139,22 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       child: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          // ← genre pills always visible regardless of loading state
           if (state.genres.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: GenrePills(
                   genres: state.genres,
-                  selectedGenreIds: state.selectedGenreIds,
-                  onToggle: notifier.toggleGenre,
+                  selectedGenreId: state.selectedGenreId,
+                  onSelect: notifier.selectGenre,
                 ),
               ),
             ),
 
-          // ← loading indicator only in manga list area
           if (state.isLoading)
             const SliverFillRemaining(
               child: Center(child: CircularProgressIndicator()),
             )
-          // ← empty state
           else if (state.mangaList.isEmpty)
             SliverFillRemaining(
               child: Center(
@@ -186,13 +180,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 ),
               ),
             )
-          // ← manga grid
           else ...[
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                  crossAxisCount: 3,
                   mainAxisSpacing: 8,
                   crossAxisSpacing: 8,
                   childAspectRatio: 0.7,
@@ -202,22 +195,22 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   return MangaCard(
                     manga: manga,
                     isFavourited: favouriteIds.contains(manga.malId),
+                    useRegularImage: true,
                     onFavouriteTap: () => ref
                         .read(favouriteProvider.notifier)
                         .toggleFavourite(manga),
                     onTap: () => context.push(
-                      // ← add navigation
                       '/viewer',
-                      extra:
-                          manga.imageUrl ??
-                          'https://picsum.photos/id/25/600/3000',
+                      extra: {
+                        'imageUrl': manga.largeImageUrl ?? manga.imageUrl ?? '',
+                        'title': manga.title ?? 'Image Viewer',
+                      },
                     ),
                   );
                 }, childCount: state.mangaList.length),
               ),
             ),
 
-            // footer
             SliverToBoxAdapter(child: _buildFooter(state)),
           ],
         ],
@@ -233,7 +226,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       );
     }
 
-    if (state.reachedCap || !state.hasNextPage) {
+    if (state.reachedEnd || !state.hasNextPage) {
       return Padding(
         padding: const EdgeInsets.all(24),
         child: Center(

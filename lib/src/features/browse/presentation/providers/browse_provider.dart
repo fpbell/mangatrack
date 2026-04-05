@@ -1,4 +1,3 @@
-// features/browse/presentation/providers/browse_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/genre.entity.dart';
 import 'package:mangatrack/src/features/discover/domain/entities/manga.entity.dart';
@@ -10,7 +9,7 @@ class BrowseState {
   final Map<String, List<MangaEntity>> mangaByGenre;
   final List<String> activeGenres;
   final bool isLoading;
-  final bool isLoadingMore; // ← add
+  final bool isLoadingMore;
   final String? error;
 
   const BrowseState({
@@ -18,7 +17,7 @@ class BrowseState {
     this.mangaByGenre = const {},
     this.activeGenres = const [],
     this.isLoading = false,
-    this.isLoadingMore = false, // ← add
+    this.isLoadingMore = false,
     this.error,
   });
 
@@ -27,7 +26,7 @@ class BrowseState {
     Map<String, List<MangaEntity>>? mangaByGenre,
     List<String>? activeGenres,
     bool? isLoading,
-    bool? isLoadingMore, // ← add
+    bool? isLoadingMore,
     String? error,
     bool clearError = false,
   }) => BrowseState(
@@ -35,17 +34,15 @@ class BrowseState {
     mangaByGenre: mangaByGenre ?? this.mangaByGenre,
     activeGenres: activeGenres ?? this.activeGenres,
     isLoading: isLoading ?? this.isLoading,
-    isLoadingMore: isLoadingMore ?? this.isLoadingMore, // ← add
+    isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     error: clearError ? null : error ?? this.error,
   );
 }
 
-// features/browse/presentation/providers/browse_provider.dart
 final browseProvider = Provider<BrowseState>((ref) {
   final genreState = ref.watch(browseGenreProvider);
   final mangaState = ref.watch(browseMangaProvider);
 
-  // full screen spinner only on first load
   final isLoading = genreState.isLoading || mangaState.isLoading;
   final error = genreState.error ?? mangaState.error;
 
@@ -74,11 +71,10 @@ final browseProvider = Provider<BrowseState>((ref) {
     mangaByGenre: grouped,
     activeGenres: activeGenres,
     isLoading: false,
-    isLoadingMore: mangaState.isLoadingMore, // ← pass through
+    isLoadingMore: mangaState.isLoadingMore,
   );
 });
 
-// ← replaces StateProvider<int> with Notifier<int>
 class ActiveGenreNotifier extends Notifier<int> {
   @override
   int build() => 0;
